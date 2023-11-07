@@ -74,6 +74,7 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 	}
 
 	Health -= Damage;
+	OnHit.Broadcast();
 
 	if (IsDead())
 	{

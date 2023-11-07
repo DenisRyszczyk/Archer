@@ -59,6 +59,10 @@ protected:
 	UAnimMontage* DodgeMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* ShootMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montages")
+	UAnimMontage* HitMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montages")
+	TSubclassOf<UCameraShakeBase> HitCameraShake;
 	UFUNCTION()
 	void CallbackPullMontageFinished(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()

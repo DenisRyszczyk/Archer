@@ -40,7 +40,8 @@ protected:
 	void EndWave();
 	UPROPERTY(BlueprintReadOnly)
 	int32 Wave = 0;
-
+	UFUNCTION(BlueprintCallable)
+	bool CanStartWaveEarly();
 	UPROPERTY(BlueprintReadOnly)
 	int32 FinishedSpawners = 0;
 	UFUNCTION()

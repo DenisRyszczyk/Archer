@@ -270,8 +270,47 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 	{
 		return 0.0f;
 	}
+
 	CurrentHP--;
+
+	if (HitCameraShake)
+	{
+		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, GetActorLocation(), 1000.0f, 1500.0f, 1.0f, true);
+	}
+
+	if (GetMesh()->GetAnimInstance() && HitMontage)
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
+
+#pragma region stolen code
+		double CosTheta = FVector::DotProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+		double Theta = FMath::Acos(CosTheta);
+		Theta = FMath::RadiansToDegrees(Theta);
+		FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+		if (CrossProduct.Z < 0)
+		{
+			Theta *= -1.f;
+		}
+		FName SectionName = FName("Back");
+		if (Theta >= -45.f && Theta < 45.f)
+		{
+			SectionName = FName("Front");
+		}
+		else if (Theta >= -135.f && Theta < -45.f)
+		{
+			SectionName = FName("Left");
+		}
+		else if (Theta >= 45.f && Theta < 135.f)
+		{
+			SectionName = FName("Right");
+		}
+
+#pragma endregion stolen code
+		GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
+	}
+
 	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP);
+
 	if (CurrentHP <= 0)
 	{
 		ChangeStatus(EPlayerStatus::EPS_Dead);

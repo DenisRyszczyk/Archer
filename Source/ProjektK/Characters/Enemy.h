@@ -6,16 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Enemy.generated.h"
 
-UENUM(BlueprintType)
-enum class EEnemyType : uint8
-{
-	EET_Basic,
-	EET_Fast,
-	EET_Heavy,
-	EET_Teleporter
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDied);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHit);
 
 class AUsable;
 
@@ -26,10 +18,10 @@ class PROJEKTK_API AEnemy : public ACharacter
 
 public:
 	AEnemy();
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	EEnemyType Type;
 	UPROPERTY(BlueprintAssignable)
 	FOnDied OnDied;
+	UPROPERTY(BlueprintAssignable)
+	FOnHit OnHit;
 protected:
 	virtual void BeginPlay() override;
 	UFUNCTION()
@@ -44,8 +36,6 @@ protected:
 	int32 GoldPiecesLeftUponDying;
 
 	//Attacking
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")
-	float AttackDamage = 10.0f;
 	UFUNCTION(BlueprintCallable)
 	void PerformAttack();
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")

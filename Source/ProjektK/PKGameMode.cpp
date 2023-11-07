@@ -18,6 +18,8 @@ void APKGameMode::StartWave()
 		return;
 	}
 
+	GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
+	SecondsLeftToNewWave = BreakTime; // Renew countdown timer
 	Wave++;
 	GatherSpawnersInvolvedInCurrentWave();
 	RemoveBuffs();
@@ -29,6 +31,7 @@ void APKGameMode::StartWave()
 		Spawner->StartWave(Wave);
 	}
 	OnWaveStarted.Broadcast(Wave);
+	
 }
 
 void APKGameMode::EndWave()
@@ -38,6 +41,11 @@ void APKGameMode::EndWave()
 	GetWorld()->GetTimerManager().SetTimer(CountdownTimer, this, &APKGameMode::CountdownTick, 1.0f, true);
 	SpawnBuffs();
 	OnWaveEnded.Broadcast(Wave);
+}
+
+bool APKGameMode::CanStartWaveEarly()
+{
+	return GetWorld()->GetTimerManager().IsTimerActive(CountdownTimer);
 }
 
 void APKGameMode::AddFinishedSpawner()
@@ -72,7 +80,6 @@ void APKGameMode::CountdownTick()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CountdownTimer);
 		StartWave();
-		SecondsLeftToNewWave = BreakTime;
 		return;
 	}
 	OnCountdownTick.Broadcast(SecondsLeftToNewWave);
