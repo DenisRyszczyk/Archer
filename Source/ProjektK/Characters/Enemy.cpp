@@ -74,6 +74,12 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 	}
 
 	Health -= Damage;
+
+	if (HitCameraShake)
+	{
+		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, UGameplayStatics::GetPlayerCharacter(this, 0)->GetActorLocation(), 5000.0f, 10000.0f, 1.0f, true);
+	}
+
 	OnHit.Broadcast();
 
 	if (IsDead())

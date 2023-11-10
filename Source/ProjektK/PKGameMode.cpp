@@ -4,6 +4,7 @@
 #include "PKGameMode.h"
 #include "Environment/EnemySpawner.h"
 #include "Environment/Usable.h"
+#include "Kismet/GameplayStatics.h"
 
 void APKGameMode::GatherAllSpawners()
 {
@@ -91,20 +92,36 @@ void APKGameMode::SpawnBuffs()
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+	if (SpawnableBuffs.IsEmpty())
+	{
+		return;
+	}
+
 	for (int32 i = 0; i < BuffsToSpawnNum; i++)
 	{
-		int32 RandomBuff = FMath::RandRange(0, SpawnableBuffs.Num()-1);
-		TSubclassOf<AUsable> NewBuffClass = SpawnableBuffs[RandomBuff];
-		if (NewBuffClass)
+		if(!SpawnableBuffs.IsEmpty())
 		{
-			AUsable* NewBuff = GetWorld()->SpawnActor<AUsable>(NewBuffClass, FVector(0, i * 500 - BuffsToSpawnNum/2 * 500, 0), FRotator(0), Params);
-			if (NewBuff)
+			int32 RandomBuff = FMath::RandRange(0, SpawnableBuffs.Num()-1);
+			TSubclassOf<AUsable> NewBuffClass = SpawnableBuffs[RandomBuff];
+				
+			SpawnedBuffsBuffer.Add(NewBuffClass);
+			SpawnableBuffs.RemoveSingle(NewBuffClass); // Adds random buff to buffer in order not to let a buff spawn multiple times even if there is only 1 instance in array.
+		
+			if (NewBuffClass)
 			{
-				SpawnedBuffs.Add(NewBuff);
+
+				AUsable* NewBuff = GetWorld()->SpawnActor<AUsable>(NewBuffClass, FVector(0, i * 500 - BuffsToSpawnNum / 2 * 500, 0), FRotator(0), Params);
+				if (NewBuff)
+				{
+					NewBuff->OnPickedUp.AddDynamic(this, &APKGameMode::RemoveBuffFromSpawnableBuffs);
+					SpawnedBuffs.Add(NewBuff);
+				}
 			}
 		}
-		
 	}
+
+	SpawnableBuffs.Append(SpawnedBuffsBuffer);
+	SpawnedBuffsBuffer.Empty(); // Add contents of buffer back into array.
 }
 
 void APKGameMode::RemoveBuffs()
@@ -118,4 +135,12 @@ void APKGameMode::RemoveBuffs()
 		if(Buff) Buff->Destroy();
 	}
 	SpawnedBuffs.Empty();
+}
+
+void APKGameMode::RemoveBuffFromSpawnableBuffs(TSubclassOf<AUsable> UsableClass)
+{
+	if (SpawnableBuffs.Contains(UsableClass))
+	{
+		SpawnableBuffs.RemoveSingle(UsableClass);
+	}
 }

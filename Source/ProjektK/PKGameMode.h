@@ -82,4 +82,8 @@ protected:
 	TArray<TSubclassOf<AUsable>> SpawnableBuffs;
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AUsable*> SpawnedBuffs;
+	UPROPERTY()
+	TArray<TSubclassOf<AUsable>> SpawnedBuffsBuffer;
+	UFUNCTION()
+	void RemoveBuffFromSpawnableBuffs(TSubclassOf<AUsable> UsableClass);
 };

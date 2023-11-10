@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ProjektK/Weapons/Arrow.h"
 #include "NiagaraComponent.h"
+#include "Components/CapsuleComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -42,13 +43,6 @@ void APlayerCharacter::HandleMovementInput(float X, float Y)
 
 void APlayerCharacter::ChangeStatus(EPlayerStatus NewStatus)
 {
-	if (PlayerStatus == EPlayerStatus::EPS_Shooting && NewStatus == EPlayerStatus::EPS_Pulling)
-	{
-		bAnotherPullQueued = true;
-		return;                   // If shooting montage plays, que another pull animation.
-	}
-
-	bAnotherPullQueued = false;
 	switch (NewStatus)
 	{
 	case EPlayerStatus::EPS_Normal:
@@ -114,11 +108,10 @@ void APlayerCharacter::CallbackShootMontageFinished(UAnimMontage* Montage, bool 
 	{
 		return;
 	}
-
-	if (bAnotherPullQueued)
+	if (bRequestingPulling)
 	{
-		PlayerStatus = EPlayerStatus::EPS_Pulling;
-		ChangeStatus(PlayerStatus);
+		ChangeStatus(EPlayerStatus::EPS_Normal);
+		ChangeStatus(EPlayerStatus::EPS_Pulling);
 	}
 	else
 	{
@@ -225,12 +218,17 @@ void APlayerCharacter::Die()
 	DisableInput(PlayerController);
 	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	OnPlayerDied.Broadcast();
 }
 
 void APlayerCharacter::TurnOnInvincibility()
 {
 	bInvincible = true;
-	if(InvincibilityParticle) InvincibilityParticle->Activate();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	if (InvincibilityParticle)
+	{
+		InvincibilityParticle->Activate();
+	}
 	FTimerHandle Timer = FTimerHandle();
 	GetWorld()->GetTimerManager().SetTimer(Timer, this, &APlayerCharacter::TurnOffInvincibility, InvincibilityTime);
 }
@@ -238,7 +236,11 @@ void APlayerCharacter::TurnOnInvincibility()
 void APlayerCharacter::TurnOffInvincibility()
 {
 	bInvincible = false;
-	if(InvincibilityParticle) InvincibilityParticle->Deactivate();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+	if (InvincibilityParticle)
+	{
+		InvincibilityParticle->Deactivate();
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -275,7 +277,7 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 
 	if (HitCameraShake)
 	{
-		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, GetActorLocation(), 1000.0f, 1500.0f, 1.0f, true);
+		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, GetActorLocation(), 5000.0f, 10000.0f, 1.0f, true);
 	}
 
 	if (GetMesh()->GetAnimInstance() && HitMontage)
@@ -309,7 +311,17 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 		GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
 	}
 
-	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP);
+	if (bRequestingPulling)
+	{
+		ChangeStatus(EPlayerStatus::EPS_Normal);
+		ChangeStatus(EPlayerStatus::EPS_Pulling);
+	}
+	else
+	{
+		ChangeStatus(EPlayerStatus::EPS_Normal);
+	}
+
+	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP, CurrentHP + 1);
 
 	if (CurrentHP <= 0)
 	{
@@ -347,6 +359,19 @@ void APlayerCharacter::AddHealthSlot(int32 AddedSlots)
 void APlayerCharacter::AddHP(int32 AddedHP)
 {
 	CurrentHP = FMath::Clamp(CurrentHP + AddedHP, 0, HealthSlots);
-	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP);
+	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP, CurrentHP - AddedHP);
+}
+
+TSubclassOf<AArrow> APlayerCharacter::GetArrowClass()
+{
+	if (ArrowClass)
+	{
+		return ArrowClass;
+	}
+	
+	else
+	{
+		return nullptr;
+	}
 }
 

@@ -44,6 +44,8 @@ protected:
 	UAnimMontage* HitMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")
 	UAnimMontage* DeathMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montages")
+	TSubclassOf<UCameraShakeBase> HitCameraShake;
 public:	
 	virtual void Tick(float DeltaTime) override;
 

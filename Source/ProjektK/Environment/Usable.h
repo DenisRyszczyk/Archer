@@ -25,6 +25,8 @@ public:
 	int32 Price;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUp, TSubclassOf<AUsable>, UsableClass);
+
 UCLASS()
 class PROJEKTK_API AUsable : public AActor
 {
@@ -36,6 +38,9 @@ public:
 	USphereComponent* OverlapSphere;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FDataTableRowHandle Row;
+	UPROPERTY(BlueprintAssignable)
+	FOnPickedUp OnPickedUp;
+
 protected:
 	virtual void BeginPlay() override;
 	UFUNCTION(BlueprintImplementableEvent)

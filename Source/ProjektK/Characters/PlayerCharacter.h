@@ -19,7 +19,8 @@ enum class EPlayerStatus : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBowStartedPulling, float, TargetFireRate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBowShot);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldUpdated, int32, GoldAmount);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthUpdated, int32, CurrentHealthSlots, int32, CurrentHealthPoints);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthUpdated, int32, CurrentHealthSlots, int32, CurrentHealthPoints, int32, OldHealthPoints);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDied);
 
 class UNiagaraComponent;
 class AArrow;
@@ -42,6 +43,8 @@ public:
 	FOnGoldUpdated OnGoldUpdated;
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthUpdated OnHealthUpdated;
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerDied OnPlayerDied;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UNiagaraComponent* InvincibilityParticle;
 
@@ -53,6 +56,7 @@ protected:
 	void HandleMovementInput(float X, float Y);
 	UFUNCTION(BlueprintCallable)
 	void ChangeStatus(EPlayerStatus NewStatus);
+
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* PullMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
@@ -63,6 +67,7 @@ protected:
 	UAnimMontage* HitMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montages")
 	TSubclassOf<UCameraShakeBase> HitCameraShake;
+
 	UFUNCTION()
 	void CallbackPullMontageFinished(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()
@@ -75,14 +80,16 @@ protected:
 	void RemoveArrowInHand();
 	UFUNCTION()
 	void RotateCharacterTowardsCursor();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float RotationInterpSpeed = 5.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float FireRate = 1.f;
+	UPROPERTY(BlueprintReadWrite)
+	bool bRequestingPulling = false;
 	UFUNCTION(BlueprintCallable)
 	void IncreaseFireRate(float DeltaFireRate);
-	UPROPERTY()
-	bool bAnotherPullQueued = false;
+
 	UPROPERTY(BlueprintReadOnly)
 	AActor* Bow;
 	UPROPERTY(EditDefaultsOnly)
@@ -90,7 +97,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	AArrow* Arrow;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<AActor> ArrowClass;
+	TSubclassOf<AArrow> ArrowClass;
 
 	UFUNCTION()
 	void PredictArrowPath();
@@ -130,4 +137,6 @@ public:
 	void AddHealthSlot(int32 AddedSlots);
 	UFUNCTION(BlueprintCallable)
 	void AddHP(int32 AddedHP);
+	UFUNCTION()
+	TSubclassOf<AArrow> GetArrowClass();
 };
