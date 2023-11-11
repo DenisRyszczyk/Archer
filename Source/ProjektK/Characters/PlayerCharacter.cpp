@@ -221,6 +221,11 @@ void APlayerCharacter::Die()
 	OnPlayerDied.Broadcast();
 }
 
+bool APlayerCharacter::IsDead()
+{
+	return CurrentHP <= 0;
+}
+
 void APlayerCharacter::TurnOnInvincibility()
 {
 	bInvincible = true;
@@ -250,7 +255,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		RotateCharacterTowardsCursor();
 	}
-	if (PlayerStatus == EPlayerStatus::EPS_Ready)
+	if (PlayerStatus == EPlayerStatus::EPS_Ready && !IsDead())
 	{
 		PredictArrowPath();
 	}
@@ -268,7 +273,7 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 	{
 		return 0.0f;
 	}
-	if (CurrentHP <= 0)
+	if (IsDead())
 	{
 		return 0.0f;
 	}

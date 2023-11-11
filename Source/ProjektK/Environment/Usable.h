@@ -57,6 +57,8 @@ protected:
 	float HoverSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Moving")
 	bool bHoveringAndRotating = true;
+	UFUNCTION(BlueprintImplementableEvent)
+	bool PickupConditionMet(AActor* PlayerActor);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION()

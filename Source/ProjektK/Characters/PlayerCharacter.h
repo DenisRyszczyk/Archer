@@ -109,6 +109,8 @@ protected:
 	int32 CurrentHP = HealthSlots;
 	UFUNCTION(BlueprintCallable)
 	void Die();
+	UFUNCTION()
+	bool IsDead();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	bool bInvincible;
 	UFUNCTION(BlueprintCallable)

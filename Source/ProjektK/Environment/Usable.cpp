@@ -42,7 +42,7 @@ void AUsable::Tick(float DeltaTime)
 void AUsable::OnOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
-	if (PlayerCharacter)
+	if (PlayerCharacter && PickupConditionMet(OtherActor))
 	{
 
 		if (PlayerCharacter->CanBuy(GetPrice()))

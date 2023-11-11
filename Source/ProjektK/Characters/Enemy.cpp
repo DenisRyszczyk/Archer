@@ -7,6 +7,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjektK/Environment/Usable.h"
+#include "ProjektK/Weapons/Arrow.h"
 
 AEnemy::AEnemy()
 {
@@ -75,7 +76,7 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 
 	Health -= Damage;
 
-	if (HitCameraShake)
+	if (HitCameraShake && Cast<AArrow>(DamageCauser))
 	{
 		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, UGameplayStatics::GetPlayerCharacter(this, 0)->GetActorLocation(), 5000.0f, 10000.0f, 1.0f, true);
 	}
