@@ -204,7 +204,7 @@ void APlayerCharacter::PredictArrowPath()
 	Params.bTraceWithCollision = true;
 	Params.StartLocation = FVector(FVector(GetActorLocation().X, GetActorLocation().Y, Arrow->GetActorLocation().Z) + GetActorForwardVector() * 95.0f);
 	Params.LaunchVelocity = GetActorForwardVector() * Arrow->GetReleaseStrength();
-	Params.SimFrequency = 30.0f;
+	Params.SimFrequency = 15.0f;
 	Params.MaxSimTime = 2.0f;
 	Params.DrawDebugType = EDrawDebugTrace::ForOneFrame;
 
@@ -255,6 +255,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		RotateCharacterTowardsCursor();
 	}
+
 	if (PlayerStatus == EPlayerStatus::EPS_Ready && !IsDead())
 	{
 		PredictArrowPath();

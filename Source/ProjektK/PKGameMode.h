@@ -38,7 +38,7 @@ protected:
 	void StartWave();
 	UFUNCTION(BlueprintCallable)
 	void EndWave();
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	int32 Wave = 0;
 	UFUNCTION(BlueprintCallable)
 	bool CanStartWaveEarly();
