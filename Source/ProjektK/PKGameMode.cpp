@@ -105,7 +105,7 @@ void APKGameMode::SpawnBuffs()
 			TSubclassOf<AUsable> NewBuffClass = SpawnableBuffs[RandomBuff];
 				
 			SpawnedBuffsBuffer.Add(NewBuffClass);
-			SpawnableBuffs.RemoveSingle(NewBuffClass); // Adds random buff to buffer in order not to let a buff spawn multiple times even if there is only 1 instance in array.
+			SpawnableBuffs.RemoveSingle(NewBuffClass); // Adds the random buff to buffer in order not to let that buff spawn multiple times even if there is only 1 instance in array.
 		
 			if (NewBuffClass)
 			{
@@ -120,8 +120,8 @@ void APKGameMode::SpawnBuffs()
 		}
 	}
 
-	SpawnableBuffs.Append(SpawnedBuffsBuffer);
-	SpawnedBuffsBuffer.Empty(); // Add contents of buffer back into array.
+	SpawnableBuffs.Append(SpawnedBuffsBuffer); //
+	SpawnedBuffsBuffer.Empty();                // Add contents of buffer back into array.
 }
 
 void APKGameMode::RemoveBuffs()

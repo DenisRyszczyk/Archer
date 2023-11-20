@@ -87,9 +87,9 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 	{
 		Die();
 	}
-	else
+	else if (GetMesh()->GetAnimInstance() && HitMontage && !GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 	{
-		if(GetMesh()->GetAnimInstance() && HitMontage) GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
+		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
 	}
 	return 0.0f;
 }

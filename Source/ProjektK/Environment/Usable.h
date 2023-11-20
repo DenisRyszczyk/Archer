@@ -65,4 +65,6 @@ public:
 	void OnOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure)
 	int32 GetPrice();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Restoring")
+	bool bIrremovableFromSpawnableBuffs = false;
 };

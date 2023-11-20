@@ -291,30 +291,32 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
 
 #pragma region stolen code
-		double CosTheta = FVector::DotProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
-		double Theta = FMath::Acos(CosTheta);
-		Theta = FMath::RadiansToDegrees(Theta);
-		FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
-		if (CrossProduct.Z < 0)
+		if (DamageCauser)
 		{
-			Theta *= -1.f;
+			double CosTheta = FVector::DotProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+			double Theta = FMath::Acos(CosTheta);
+			Theta = FMath::RadiansToDegrees(Theta);
+			FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+			if (CrossProduct.Z < 0)
+			{
+				Theta *= -1.f;
+			}
+			FName SectionName = FName("Back");
+			if (Theta >= -45.f && Theta < 45.f)
+			{
+				SectionName = FName("Front");
+			}
+			else if (Theta >= -135.f && Theta < -45.f)
+			{
+				SectionName = FName("Left");
+			}
+			else if (Theta >= 45.f && Theta < 135.f)
+			{
+				SectionName = FName("Right");
+			}
+			GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
 		}
-		FName SectionName = FName("Back");
-		if (Theta >= -45.f && Theta < 45.f)
-		{
-			SectionName = FName("Front");
-		}
-		else if (Theta >= -135.f && Theta < -45.f)
-		{
-			SectionName = FName("Left");
-		}
-		else if (Theta >= 45.f && Theta < 135.f)
-		{
-			SectionName = FName("Right");
-		}
-
 #pragma endregion stolen code
-		GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
 	}
 
 	if (bRequestingPulling)

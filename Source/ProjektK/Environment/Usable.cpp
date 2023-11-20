@@ -49,7 +49,10 @@ void AUsable::OnOverlapped(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		{
 			PlayerCharacter->SubtractGold(GetPrice());
 			ApplyEffect();
-			OnPickedUp.Broadcast(this->GetClass());
+			if (!bIrremovableFromSpawnableBuffs)
+			{
+				OnPickedUp.Broadcast(this->GetClass());
+			}
 			Destroy();
 		}
 	}

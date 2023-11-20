@@ -51,7 +51,14 @@ void AArrow::CallbackOnProjectileStop(const FHitResult& ImpactResult)
 	ArrowMesh->AddLocalOffset(FVector(0.f, 0.f, 15.f)); // Push arrow into target
 	ProjectileMovementComponent->Deactivate();
 	AttachToComponent(ImpactResult.GetComponent(), FAttachmentTransformRules::KeepWorldTransform, ImpactResult.BoneName);
+
 	UGameplayStatics::ApplyDamage(ImpactResult.GetActor(), ArrowDamage, nullptr, this, UDamageType::StaticClass());
+
+	if (!ImpactResult.GetComponent() || !ImpactResult.GetActor())
+	{
+		Destroy();
+		return;
+	}
 	ApplyEffectToHitActor(ImpactResult.GetActor());
 	if (ImpactResult.GetComponent()->IsSimulatingPhysics())
 	{
@@ -59,6 +66,7 @@ void AArrow::CallbackOnProjectileStop(const FHitResult& ImpactResult)
 	}
 	SetLifeSpan(3.0f);
 	SpawnImpactVfx(ImpactResult);
+	
 }
 
 void AArrow::SpawnImpactVfx(FHitResult HitResult)
@@ -76,7 +84,7 @@ void AArrow::SpawnImpactVfx(FHitResult HitResult)
 		Surface = HitResult.GetComponent()->GetMaterial(0)->GetPhysicalMaterial()->SurfaceType; // if not then check if material on hit component exists
 	}
 
-	else
+	else 
 	{
 		return; // if both checks fail then return so no error occurs
 	}
