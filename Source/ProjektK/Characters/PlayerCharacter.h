@@ -52,15 +52,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION()
+	void SpawnAndAttachBow();
+
 	UFUNCTION(BlueprintCallable)
 	void HandleMovementInput(float X, float Y);
 	UFUNCTION(BlueprintCallable)
 	void ChangeStatus(EPlayerStatus NewStatus);
+	UFUNCTION()
+	void ChangeToDesiredStatus();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* PullMontage;
-	UPROPERTY(EditDefaultsOnly, Category = "Montages")
-	UAnimMontage* DodgeMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Montages")
 	UAnimMontage* ShootMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Montages")
@@ -129,6 +132,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UFUNCTION()
 	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	UFUNCTION()
+	void PlayHitReactionMontage(AActor* DamageCauser);
 	UFUNCTION(BlueprintCallable)
 	void AddGold(int32 AddedGold);
 	UFUNCTION(BlueprintCallable)

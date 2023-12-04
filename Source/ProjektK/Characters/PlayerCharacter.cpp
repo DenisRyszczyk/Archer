@@ -22,7 +22,14 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 	OnGoldUpdated.Broadcast(Gold);
+
+	SpawnAndAttachBow();
+}
+
+void APlayerCharacter::SpawnAndAttachBow()
+{
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 	Bow = GetWorld()->SpawnActor<AActor>(BowClass, GetActorTransform(), Params);
@@ -34,8 +41,8 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::HandleMovementInput(float X, float Y)
 {
-	FVector RightDirection = FVector(0, 1, 0);//UKismetMathLibrary::GetRightVector(FRotator(0.f, GetControlRotation().Yaw, GetControlRotation().Roll));
-	FVector ForwardDirection = FVector(1, 0, 0);//UKismetMathLibrary::GetForwardVector(FRotator(0.f, GetControlRotation().Yaw, 0.f));
+	FVector RightDirection = FVector(0, 1, 0);
+	FVector ForwardDirection = FVector(1, 0, 0);
 
 	APawn::AddMovementInput(RightDirection, X);
 	APawn::AddMovementInput(ForwardDirection, Y);
@@ -53,7 +60,7 @@ void APlayerCharacter::ChangeStatus(EPlayerStatus NewStatus)
 		}
 		else if(GetMesh()->GetAnimInstance())
 		{
-			GetMesh()->GetAnimInstance()->StopAllMontages(0.5f);
+			if(GetMesh()->GetAnimInstance()->GetCurrentActiveMontage() == PullMontage) GetMesh()->GetAnimInstance()->Montage_Stop(0.5f, PullMontage);
 			RemoveArrowInHand();
 		}
 		PlayerStatus = NewStatus;
@@ -88,6 +95,19 @@ void APlayerCharacter::ChangeStatus(EPlayerStatus NewStatus)
 	}
 }
 
+void APlayerCharacter::ChangeToDesiredStatus()
+{
+	if (bRequestingPulling)
+	{
+		ChangeStatus(EPlayerStatus::EPS_Normal);
+		ChangeStatus(EPlayerStatus::EPS_Pulling);
+	}
+	else
+	{
+		ChangeStatus(EPlayerStatus::EPS_Normal);
+	}
+}
+
 void APlayerCharacter::CallbackPullMontageFinished(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage != PullMontage)
@@ -108,15 +128,8 @@ void APlayerCharacter::CallbackShootMontageFinished(UAnimMontage* Montage, bool 
 	{
 		return;
 	}
-	if (bRequestingPulling)
-	{
-		ChangeStatus(EPlayerStatus::EPS_Normal);
-		ChangeStatus(EPlayerStatus::EPS_Pulling);
-	}
-	else
-	{
-		ChangeStatus(EPlayerStatus::EPS_Normal);
-	}
+
+	ChangeToDesiredStatus();
 }
 
 void APlayerCharacter::ShootArrow()
@@ -234,6 +247,7 @@ void APlayerCharacter::TurnOnInvincibility()
 	{
 		InvincibilityParticle->Activate();
 	}
+
 	FTimerHandle Timer = FTimerHandle();
 	GetWorld()->GetTimerManager().SetTimer(Timer, this, &APlayerCharacter::TurnOffInvincibility, InvincibilityTime);
 }
@@ -270,64 +284,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (bInvincible)
-	{
-		return 0.0f;
-	}
-	if (IsDead())
-	{
-		return 0.0f;
-	}
+	if (bInvincible) return 0.0f;
+
+	if (IsDead()) return 0.0f;
 
 	CurrentHP--;
 
-	if (HitCameraShake)
-	{
-		UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, GetActorLocation(), 5000.0f, 10000.0f, 1.0f, true);
-	}
+	if (HitCameraShake) UGameplayStatics::PlayWorldCameraShake(this, HitCameraShake, GetActorLocation(), 5000.0f, 10000.0f, 1.0f, true);
 
-	if (GetMesh()->GetAnimInstance() && HitMontage)
-	{
-		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
-
-#pragma region stolen code
-		if (DamageCauser)
-		{
-			double CosTheta = FVector::DotProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
-			double Theta = FMath::Acos(CosTheta);
-			Theta = FMath::RadiansToDegrees(Theta);
-			FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
-			if (CrossProduct.Z < 0)
-			{
-				Theta *= -1.f;
-			}
-			FName SectionName = FName("Back");
-			if (Theta >= -45.f && Theta < 45.f)
-			{
-				SectionName = FName("Front");
-			}
-			else if (Theta >= -135.f && Theta < -45.f)
-			{
-				SectionName = FName("Left");
-			}
-			else if (Theta >= 45.f && Theta < 135.f)
-			{
-				SectionName = FName("Right");
-			}
-			GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
-		}
-#pragma endregion stolen code
-	}
-
-	if (bRequestingPulling)
-	{
-		ChangeStatus(EPlayerStatus::EPS_Normal);
-		ChangeStatus(EPlayerStatus::EPS_Pulling);
-	}
-	else
-	{
-		ChangeStatus(EPlayerStatus::EPS_Normal);
-	}
+	PlayHitReactionMontage(DamageCauser);
 
 	OnHealthUpdated.Broadcast(HealthSlots, CurrentHP, CurrentHP + 1);
 
@@ -339,6 +304,45 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 
 	TurnOnInvincibility();
 	return 0.0f;
+}
+
+void APlayerCharacter::PlayHitReactionMontage(AActor* DamageCauser)
+{
+	if (GetMesh()->GetAnimInstance() && HitMontage)
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Player: %s"), *HitMontage->GetName()));
+	}
+#pragma region stolen code
+	if (DamageCauser)
+	{
+		double CosTheta = FVector::DotProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+		double Theta = FMath::Acos(CosTheta);
+		Theta = FMath::RadiansToDegrees(Theta);
+		FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal());
+		if (CrossProduct.Z < 0)
+		{
+			Theta *= -1.f;
+		}
+		FName SectionName = FName("Back");
+		if (Theta >= -45.f && Theta < 45.f)
+		{
+			SectionName = FName("Front");
+		}
+		else if (Theta >= -135.f && Theta < -45.f)
+		{
+			SectionName = FName("Left");
+		}
+		else if (Theta >= 45.f && Theta < 135.f)
+		{
+			SectionName = FName("Right");
+		}
+		GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Hit: %s"), *SectionName.ToString()));
+	}
+#pragma endregion stolen code
+	
+	ChangeToDesiredStatus();
 }
 
 void APlayerCharacter::AddGold(int32 AddedGold)
@@ -382,4 +386,3 @@ TSubclassOf<AArrow> APlayerCharacter::GetArrowClass()
 		return nullptr;
 	}
 }
-
