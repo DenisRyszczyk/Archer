@@ -53,6 +53,7 @@ void APlayerCharacter::ChangeStatus(EPlayerStatus NewStatus)
 	switch (NewStatus)
 	{
 	case EPlayerStatus::EPS_Normal:
+		GetMesh()->GetAnimInstance()->OnMontageEnded.RemoveDynamic(this, &APlayerCharacter::CallbackPullMontageFinished);
 		if (PlayerStatus == EPlayerStatus::EPS_Ready)
 		{
 			ShootArrow();
@@ -234,7 +235,7 @@ void APlayerCharacter::Die()
 	OnPlayerDied.Broadcast();
 }
 
-bool APlayerCharacter::IsDead()
+bool APlayerCharacter::IsHealthBelowZero()
 {
 	return CurrentHP <= 0;
 }
@@ -265,12 +266,12 @@ void APlayerCharacter::TurnOffInvincibility()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (PlayerStatus != EPlayerStatus::EPS_Normal && PlayerStatus != EPlayerStatus::EPS_Dead)
+	if (PlayerStatus != EPlayerStatus::EPS_Normal && PlayerStatus != EPlayerStatus::EPS_Dead && InputEnabled())
 	{
 		RotateCharacterTowardsCursor();
 	}
 
-	if (PlayerStatus == EPlayerStatus::EPS_Ready && !IsDead())
+	if (PlayerStatus == EPlayerStatus::EPS_Ready && !IsHealthBelowZero())
 	{
 		PredictArrowPath();
 	}
@@ -286,7 +287,7 @@ float APlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent
 {
 	if (bInvincible) return 0.0f;
 
-	if (IsDead()) return 0.0f;
+	if (IsHealthBelowZero()) return 0.0f;
 
 	CurrentHP--;
 
@@ -311,7 +312,6 @@ void APlayerCharacter::PlayHitReactionMontage(AActor* DamageCauser)
 	if (GetMesh()->GetAnimInstance() && HitMontage)
 	{
 		GetMesh()->GetAnimInstance()->Montage_Play(HitMontage);
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Player: %s"), *HitMontage->GetName()));
 	}
 #pragma region stolen code
 	if (DamageCauser)
@@ -338,7 +338,6 @@ void APlayerCharacter::PlayHitReactionMontage(AActor* DamageCauser)
 			SectionName = FName("Right");
 		}
 		GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, HitMontage);
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Hit: %s"), *SectionName.ToString()));
 	}
 #pragma endregion stolen code
 	

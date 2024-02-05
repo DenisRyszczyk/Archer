@@ -113,7 +113,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void Die();
 	UFUNCTION()
-	bool IsDead();
+	bool IsHealthBelowZero();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	bool bInvincible;
 	UFUNCTION(BlueprintCallable)

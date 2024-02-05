@@ -37,14 +37,14 @@ void AEnemy::Die()
 	OnDied.Broadcast();
 }
 
-bool AEnemy::IsDead()
+bool AEnemy::IsHealthBelowZero()
 {
 	return Health <= 0.0f;
 }
 
 void AEnemy::PerformAttack()
 {
-	if(!GetMesh()->GetAnimInstance()->IsAnyMontagePlaying() && AActor::GetDistanceTo(UGameplayStatics::GetPlayerCharacter(this, 0)) <= 350.0f && !IsDead())
+	if(!GetMesh()->GetAnimInstance()->IsAnyMontagePlaying() && AActor::GetDistanceTo(UGameplayStatics::GetPlayerCharacter(this, 0)) <= 350.0f && !IsHealthBelowZero())
 	{
 		if (AttackMontages.IsEmpty())
 		{
@@ -69,7 +69,7 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (IsDead())
+	if (IsHealthBelowZero())
 	{
 		return 0.0f;
 	}
@@ -83,7 +83,7 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 
 	OnHit.Broadcast();
 
-	if (IsDead())
+	if (IsHealthBelowZero())
 	{
 		Die();
 	}

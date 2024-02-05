@@ -29,7 +29,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
 	float Health = 10.f;
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool IsDead();
+	bool IsHealthBelowZero();
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AUsable> GoldClass;
 	UPROPERTY(EditDefaultsOnly)
